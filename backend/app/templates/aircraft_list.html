@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Aeronaves - Control Aeronaval{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Aeronaves en Dotación</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Matrícula</th>
+                <th>Modelo</th>
+                <th>Estado Operacional</th>
+                <th>Horas Totales</th>
+                <th>Ciclos Totales</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ac in aircrafts %}
+            <tr>
+                <td><strong>{{ ac.serial_number }}</strong></td>
+                <td>{{ ac.nomenclature }}</td>
+                <td>
+                    <span class="badge badge-{{ ac.current_status|lower }}">
+                        {{ ac.current_status }}
+                    </span>
+                </td>
+                <td>{{ ac.technical_history.current_total_hours|default(0.0) }} hs</td>
+                <td>{{ ac.technical_history.current_total_cycles|default(0) }} c</td>
+                <td>
+                    <a href="/aircraft/{{ ac.id }}" class="btn">Ver Detalle</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

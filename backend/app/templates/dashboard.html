@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Control Aeronaval{% endblock %}
+
+{% block content %}
+<h2>Resumen Operativo</h2>
+
+<div class="grid-3">
+    <!-- Aeronaves Totales -->
+    <div class="card">
+        <h3 style="color: var(--primary); margin-top:0;">Aeronaves</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0;">{{ aircraft_count }}</p>
+        <span style="color: var(--text-muted);">Total de fuselajes en dotación</span>
+    </div>
+
+    <!-- Componentes y Motores -->
+    <div class="card">
+        <h3 style="color: var(--primary); margin-top:0;">Componentes</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0;">{{ components_count }}</p>
+        <span style="color: var(--text-muted);">Motores y accesorios mayores</span>
+    </div>
+
+    <!-- Estado de Disponibilidad -->
+    <div class="card">
+        <h3 style="color: var(--success); margin-top:0;">Aeronaves Operativas</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; color: var(--success);">{{ operational_count }}</p>
+        <span style="color: var(--text-muted);">Fuselajes listos para vuelo (RELEASED)</span>
+    </div>
+
+    <!-- Aeronaves Inoperativas -->
+    <div class="card">
+        <h3 style="color: var(--danger); margin-top:0;">Aeronaves Grounded</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; color: var(--danger);">{{ grounded_count }}</p>
+        <span style="color: var(--text-muted);">Fuselajes retenidos en mantenimiento</span>
+    </div>
+
+    <!-- Arsenal Workflow -->
+    <div class="card">
+        <h3 style="color: var(--warning); margin-top:0;">Componentes en Arsenal</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; color: var(--warning);">{{ arsenal_count }}</p>
+        <span style="color: var(--text-muted);">Reparaciones activas en taller central</span>
+    </div>
+
+    <!-- Alertas Activas -->
+    <div class="card">
+        <h3 style="color: var(--danger); margin-top:0;">Alertas Críticas</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; color: var(--danger);">{{ alerts_count }}</p>
+        <span style="color: var(--text-muted);">Mantenimientos preventivos vencidos</span>
+    </div>
+</div>
+{% endblock %}

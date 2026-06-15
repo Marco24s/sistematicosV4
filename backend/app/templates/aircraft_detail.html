@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle Aeronave - {{ aircraft.serial_number }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2>Aeronave {{ aircraft.serial_number }} ({{ aircraft.nomenclature }})</h2>
+    <span class="badge badge-{{ aircraft.current_status|lower }}" style="font-size: 1.1rem; padding: 0.5rem 1rem;">
+        {{ aircraft.current_status }}
+    </span>
+</div>
+
+<div class="grid-3">
+    <!-- Historial Técnico -->
+    <div class="card">
+        <h3>Historial Técnico</h3>
+        <p><strong>Horas Totales:</strong> {{ history.current_total_hours|default(0.0) }} hs</p>
+        <p><strong>Ciclos Totales:</strong> {{ history.current_total_cycles|default(0) }} c</p>
+        <p><strong>Vencimiento Calendario:</strong> {{ history.calendar_expiration|default('N/A') }}</p>
+        <p><strong>Vencimiento Preservación:</strong> {{ history.preservation_expiration|default('N/A') }}</p>
+    </div>
+
+    <!-- Cerrar Vuelo -->
+    <div class="card">
+        <h3>Registrar Cierre de Vuelo</h3>
+        <form action="/aircraft/{{ aircraft.id }}/close-flight" method="post">
+            <div class="form-group">
+                <label for="flight_hours">Horas de Vuelo a Acumular</label>
+                <input type="number" id="flight_hours" name="flight_hours" step="0.1" min="0.1" placeholder="Ej: 2.5" required>
+            </div>
+            <button type="submit" class="btn" style="width: 100%;">Cerrar Vuelo</button>
+        </form>
+    </div>
+
+    <!-- Alertas y Restricciones Activas -->
+    <div class="card">
+        <h3>Alertas y Restricciones</h3>
+        {% if alerts %}
+            <ul style="padding-left: 1.2rem; color: var(--danger);">
+                {% for alert in alerts %}
+                    <li><strong>[{{ alert.alert_code }}]</strong> {{ alert.message }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="color: var(--success);">✔ Sin restricciones de aeronavegabilidad activas.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Componentes Instalados -->
+<div class="card">
+    <h3>Componentes y Accesorios Instalados</h3>
+    {% if installed_components %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Posición / Slot</th>
+                    <th>Nomenclatura</th>
+                    <th>Part Number</th>
+                    <th>Serial Number</th>
+                    <th>Horas Componente</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ic in installed_components %}
+                <tr>
+                    <td><code>{{ ic.position_code }}</code></td>
+                    <td>{{ ic.installed_asset.nomenclature }}</td>
+                    <td>{{ ic.installed_asset.part_number }}</td>
+                    <td>{{ ic.installed_asset.serial_number }}</td>
+                    <td>{{ component_hours.get(ic.installed_asset_id, 0.0) }} hs</td>
+                    <td><span class="badge badge-installed">INSTALLED</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color: var(--text-muted);">No hay componentes registrados como instalados.</p>
+    {% endif %}
+</div>
+
+<!-- Contadores de Mantenimiento Pendientes -->
+<div class="card">
+    <h3>Contadores de Mantenimiento (Manufactura/Inspecciones)</h3>
+    {% if counters %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Programa de Mantenimiento</th>
+                    <th>Uso Actual</th>
+                    <th>Consumo Restante</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for counter in counters %}
+                <tr>
+                    <td>{{ counter.maintenance_program.name }}</td>
+                    <td>{{ counter.current_usage }} hs</td>
+                    <td>{{ counter.remaining_usage }} hs</td>
+                    <td>
+                        {% if counter.remaining_usage <= 0 %}
+                            <span class="badge badge-critical">VENCIDO</span>
+                        {% elif counter.remaining_usage <= 5 %}
+                            <span class="badge badge-warning">PRÓXIMO</span>
+                        {% else %}
+                            <span class="badge badge-released">VIGENTE</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color: var(--text-muted);">No hay contadores de mantenimiento configurados para esta aeronave.</p>
+    {% endif %}
+</div>
+{% endblock %}

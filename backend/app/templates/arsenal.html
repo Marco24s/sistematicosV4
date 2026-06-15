@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Monitor de Arsenal - Control Aeronaval{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2>Flujo de Trabajo del Arsenal Central</h2>
+    <a href="/report-failure" class="btn">Reportar Nueva Falla</a>
+</div>
+
+<!-- Workflow Panels -->
+<div class="grid-3" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+    <div class="card" style="text-align: center; padding: 1rem;">
+        <h4 style="margin: 0; color: var(--text-muted);">Enviados</h4>
+        <p style="font-size: 2rem; font-weight: 700; margin: 0.5rem 0; color: var(--primary);">{{ status_counts.sent }}</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 1rem;">
+        <h4 style="margin: 0; color: var(--text-muted);">En Ingeniería</h4>
+        <p style="font-size: 2rem; font-weight: 700; margin: 0.5rem 0; color: var(--warning);">{{ status_counts.engineering }}</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 1rem;">
+        <h4 style="margin: 0; color: var(--text-muted);">En Taller / Reparación</h4>
+        <p style="font-size: 2rem; font-weight: 700; margin: 0.5rem 0; color: var(--primary);">{{ status_counts.repair }}</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 1rem;">
+        <h4 style="margin: 0; color: var(--text-muted);">Esperando Calidad</h4>
+        <p style="font-size: 2rem; font-weight: 700; margin: 0.5rem 0; color: var(--warning);">{{ status_counts.quality }}</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 1rem;">
+        <h4 style="margin: 0; color: var(--text-muted);">Liberados (Listos)</h4>
+        <p style="font-size: 2rem; font-weight: 700; margin: 0.5rem 0; color: var(--success);">{{ status_counts.completed }}</p>
+    </div>
+</div>
+
+<!-- Send Component Form -->
+<div class="card">
+    <h3>Enviar Componente al Arsenal</h3>
+    {% if success_msg %}
+        <div class="card" style="background-color: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); margin-bottom: 1rem; padding: 0.75rem;">
+            {{ success_msg }}
+        </div>
+    {% endif %}
+    <form action="/arsenal/send" method="post" class="grid-3" style="max-width: 100%; align-items: flex-end; gap: 1rem;">
+        <div class="form-group">
+            <label for="component_asset_id">Componente con Falla</label>
+            <select id="component_asset_id" name="component_asset_id" required>
+                <option value="">-- Seleccionar Componente --</option>
+                {% for comp in components %}
+                    <option value="{{ comp.id }}">{{ comp.serial_number }} - {{ comp.nomenclature }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="failure_report_id">Falla Asociada</label>
+            <select id="failure_report_id" name="failure_report_id" required>
+                <option value="">-- Seleccionar Falla --</option>
+                {% for fail in failures %}
+                    <option value="{{ fail.id }}">{{ fail.failure_code }} ({{ fail.description[:30] }}...)</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="source_squadron_id">Departamento de Origen</label>
+            <select id="source_squadron_id" name="source_squadron_id" required>
+                <option value="">-- Seleccionar --</option>
+                {% for dep in departments %}
+                    <option value="{{ dep.id }}">{{ dep.name }} ({{ dep.organization.name }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn" style="width: 100%;">Enviar a Taller</button>
+        </div>
+    </form>
+</div>
+
+<!-- List of Requests -->
+<div class="card">
+    <h3>Monitoreo de Solicitudes de Taller</h3>
+    {% if requests %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Solicitud</th>
+                    <th>Componente</th>
+                    <th>Nro Serial</th>
+                    <th>Prioridad</th>
+                    <th>Origen</th>
+                    <th>Solicitado por</th>
+                    <th>Estado de Ciclo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td><code>{{ req.id.hex[:8] }}</code></td>
+                    <td>{{ req.asset.nomenclature }}</td>
+                    <td>{{ req.asset.serial_number }}</td>
+                    <td><span class="badge badge-warning">{{ req.priority }}</span></td>
+                    <td>{{ req.origin_department.name }}</td>
+                    <td>{{ req.requested_by }}</td>
+                    <td>
+                        <span class="badge badge-{{ req.status|lower }}">
+                            {{ req.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color: var(--text-muted);">No hay componentes activos registrados en el Arsenal.</p>
+    {% endif %}
+</div>
+{% endblock %}

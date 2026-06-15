@@ -1,0 +1,18 @@
+﻿services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sistematicos-v4-postgres
+    environment:
+      POSTGRES_DB: sistematicos_v4
+      POSTGRES_USER: sistematicos
+      POSTGRES_PASSWORD: sistematicos_dev
+    ports:
+      - "55432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sistematicos -d sistematicos_v4"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

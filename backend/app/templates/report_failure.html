@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Reportar Falla - Control Aeronaval{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>Reportar Falla Técnica (Disparar Grounding)</h2>
+    
+    {% if success_msg %}
+        <div class="card" style="background-color: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); margin-bottom: 1rem;">
+            {{ success_msg }}
+        </div>
+    {% endif %}
+    {% if error_msg %}
+        <div class="card" style="background-color: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); margin-bottom: 1rem;">
+            {{ error_msg }}
+        </div>
+    {% endif %}
+
+    <form action="/report-failure" method="post" style="max-width: 100%;">
+        <!-- Aeronave -->
+        <div class="form-group">
+            <label for="aircraft_id">Seleccionar Aeronave</label>
+            <select id="aircraft_id" name="aircraft_id" required>
+                <option value="">-- Seleccionar --</option>
+                {% for ac in aircrafts %}
+                    <option value="{{ ac.id }}">{{ ac.serial_number }} - {{ ac.nomenclature }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Componente -->
+        <div class="form-group">
+            <label for="component_id">Seleccionar Componente / Motor Afectado</label>
+            <select id="component_id" name="component_id" required>
+                <option value="">-- Seleccionar --</option>
+                {% for comp in components %}
+                    <option value="{{ comp.id }}">{{ comp.serial_number }} - {{ comp.nomenclature }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Gravedad -->
+        <div class="form-group">
+            <label for="severity">Gravedad de la Falla</label>
+            <select id="severity" name="severity" required>
+                <option value="LOW">Baja (LOW)</option>
+                <option value="MEDIUM">Media (MEDIUM)</option>
+                <option value="HIGH">Alta (HIGH)</option>
+                <option value="CRITICAL">Crítica (CRITICAL)</option>
+                <option value="FLIGHT_SAFETY">Seguridad de Vuelo (FLIGHT_SAFETY)</option>
+            </select>
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group">
+            <label for="description">Descripción Detallada</label>
+            <textarea id="description" name="description" rows="4" placeholder="Describa el comportamiento de falla o la discrepancia observada..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-danger" style="margin-top: 1rem;">Registrar Falla y Aplicar Grounding</button>
+    </form>
+</div>
+{% endblock %}
