@@ -336,12 +336,11 @@ def seed_data():
         # 9. Crear RBAC: Permisos, Roles, y SystemUsers
         from app.modules.authorization.domain.models import SystemUser, UserAssignment, OrganizationRole, Permission
         import bcrypt
-
+        
         # Permisos base (extraídos de policies.py)
         perms = [
             "CREATE_MISSION", "CLOSE_FLIGHT", "INSTALL_COMPONENT", "VALIDATE_FLIGHT_RELEASE", 
-            "AUTHORIZE_REPAIR_TASK", "APPROVE_QUALITY_INSPECTION", "ISSUE_AIRWORTHINESS_BLOCK", 
-            "APPROVE_PURCHASE_ORDER"
+            "APPROVE_WORK_ORDER", "SIGN_QUALITY", "SYSTEM_ADMIN_ACCESS"
         ]
         db_perms = {}
         for p in perms:
@@ -352,12 +351,13 @@ def seed_data():
             db_perms[p] = perm
         db.commit()
 
-        # Roles
+        # Roles y asignación
         roles_config = {
-            "COMMAND_OFFICER": ["CREATE_MISSION", "APPROVE_PURCHASE_ORDER"],
-            "MAINTENANCE_CHIEF": ["VALIDATE_FLIGHT_RELEASE", "ISSUE_AIRWORTHINESS_BLOCK", "AUTHORIZE_REPAIR_TASK"],
-            "INSPECTOR": ["APPROVE_QUALITY_INSPECTION", "VALIDATE_FLIGHT_RELEASE"],
-            "TECHNICIAN": ["CLOSE_FLIGHT", "INSTALL_COMPONENT"]
+            "COMMAND_OFFICER": ["CREATE_MISSION", "VALIDATE_FLIGHT_RELEASE"],
+            "MAINTENANCE_CHIEF": ["APPROVE_WORK_ORDER"],
+            "INSPECTOR": ["SIGN_QUALITY"],
+            "TECHNICIAN": ["CLOSE_FLIGHT", "INSTALL_COMPONENT"],
+            "SYSTEM_ADMIN": ["SYSTEM_ADMIN_ACCESS"]
         }
         db_roles = {}
         for role_name, role_perms in roles_config.items():
@@ -377,7 +377,8 @@ def seed_data():
             ("comando", "comando123", "COMMAND_OFFICER", comando.id, comando.id), # just map to Comando for testing
             ("jefe", "jefe123", "MAINTENANCE_CHIEF", unidades["Segunda Escuadrilla Aeronaval de Helicópteros"].id, unidades["Segunda Escuadrilla Aeronaval de Helicópteros"].id),
             ("inspector", "inspector123", "INSPECTOR", unidades["Segunda Escuadrilla Aeronaval de Helicópteros"].id, unidades["Segunda Escuadrilla Aeronaval de Helicópteros"].id),
-            ("tech", "tech123", "TECHNICIAN", unidades["Segunda Escuadrilla Aeronaval de Helicópteros"].id, unidades["Segunda Escuadrilla Aeronaval de Helicópteros"].id)
+            ("tech", "tech123", "TECHNICIAN", unidades["Segunda Escuadrilla Aeronaval de Helicópteros"].id, unidades["Segunda Escuadrilla Aeronaval de Helicópteros"].id),
+            ("admin", "admin123", "SYSTEM_ADMIN", comando.id, comando.id)
         ]
 
         for username, password, role_key, org_id, dep_id in users_config:

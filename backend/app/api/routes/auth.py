@@ -48,5 +48,41 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     }
 
 @router.get("/auth/me", tags=["auth"])
-def get_me(payload: dict = Depends(get_current_user_payload)):
-    return payload
+def get_me(payload: dict = Depends(get_current_user_payload), db: Session = Depends(get_db)):
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+        
+    user = db.get(SystemUser, UUID(user_id))
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+    # Get active assignment
+    from app.modules.authorization.domain.models import UserAssignment
+    from app.modules.organization.domain.models import Organization, Department
+    
+    assignment = db.query(UserAssignment).filter(UserAssignment.user_id == user.id, UserAssignment.active == True).first()
+    
+    profile = {
+        "id": str(user.id),
+        "username": user.username,
+        "role_name": "NONE",
+        "organization_name": "UNASSIGNED",
+        "department_name": "UNASSIGNED",
+        "permissions": []
+    }
+    
+    if assignment:
+        role = assignment.role
+        org = db.get(Organization, assignment.organization_id)
+        dept = db.get(Department, assignment.department_id)
+        
+        if role:
+            profile["role_name"] = role.name
+            profile["permissions"] = [p.name for p in role.permissions]
+        if org:
+            profile["organization_name"] = org.name
+        if dept:
+            profile["department_name"] = dept.name
+            
+    return profile

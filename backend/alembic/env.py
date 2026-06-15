@@ -23,6 +23,7 @@ from app.modules.flight_release_control.domain import models as flight_release_c
 from app.modules.airworthiness_engine.domain import models as airworthiness_engine_models
 from app.modules.disposal_management.domain import models as disposal_management_models
 from app.modules.asset_reallocation.domain import models as asset_reallocation_models
+from app.modules.auditing.domain import models as auditing_models
 from app.modules.configuration_baseline.domain import models as configuration_baseline_models
 from app.modules.structural_fatigue.domain import models as structural_fatigue_models
 from app.modules.maintenance_human_factors.domain import models as maintenance_human_factors_models

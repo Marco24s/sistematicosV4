@@ -12,6 +12,8 @@ from app.modules.squadron_operations.domain.models import AircraftConfiguration,
 
 router = APIRouter()
 
+from app.api.routes.auth import get_current_user_payload
+
 class AssetRegisterRequest(BaseModel):
     serial_number: str
     asset_type_id: UUID
@@ -19,14 +21,22 @@ class AssetRegisterRequest(BaseModel):
     classification: str
     part_number: str = "PN-GENERIC"
     nomenclature: str = "Generic Asset"
+    origin_terminal: str = "UNKNOWN"
 
 
 @router.post("/assets/register", tags=["assets"])
-def register_asset(request: AssetRegisterRequest, db: Session = Depends(get_db)):
+def register_asset(
+    request: AssetRegisterRequest, 
+    db: Session = Depends(get_db),
+    payload: dict = Depends(get_current_user_payload)
+):
     try:
+        user_id = UUID(payload.get("sub"))
         service = AssetsApplicationService()
         asset = service.register_asset(
             session=db,
+            user_id=user_id,
+            origin_terminal=request.origin_terminal,
             serial_number=request.serial_number,
             asset_type_id=request.asset_type_id,
             organization_id=request.organization_id,
@@ -48,6 +58,41 @@ def register_asset(request: AssetRegisterRequest, db: Session = Depends(get_db))
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@router.get("/assets/types", tags=["assets"])
+def get_asset_types(db: Session = Depends(get_db)):
+    from app.modules.assets.domain.models import AssetType
+    types = db.query(AssetType).all()
+    return [{"id": str(t.id), "name": t.name, "category": t.category} for t in types]
+
+
+class AssetTypeCreateRequest(BaseModel):
+    name: str
+    category: str
+
+
+@router.post("/assets/types", tags=["assets"])
+def create_asset_type(request: AssetTypeCreateRequest, db: Session = Depends(get_db)):
+    from app.modules.assets.domain.models import AssetType
+    from sqlalchemy.exc import IntegrityError
+    
+    new_type = AssetType(id=uuid4(), name=request.name, category=request.category)
+    db.add(new_type)
+    try:
+        db.commit()
+        db.refresh(new_type)
+        return {"id": str(new_type.id), "name": new_type.name, "category": new_type.category}
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Este Modelo y Categoría ya existen en la base de datos.")
+
+
+@router.get("/assets/organizations", tags=["assets"])
+def get_organizations(db: Session = Depends(get_db)):
+    from app.modules.organization.domain.models import Organization
+    orgs = db.query(Organization).all()
+    return [{"id": str(o.id), "name": o.name} for o in orgs]
 
 
 @router.get("/assets/{asset_id}", tags=["assets"])
@@ -304,3 +349,26 @@ def get_aircraft_timeline(id: UUID, db: Session = Depends(get_db)):
             "metadata": ev.metadata_json,
         })
     return results
+
+@router.get("/assets/global-engine/all", tags=["assets"])
+def get_global_engine_assets(db: Session = Depends(get_db)):
+    assets = db.query(Asset).all()
+    result = []
+    for asset in assets:
+        owner = db.get(Organization, asset.organization_owner_id) if asset.organization_owner_id else None
+        custodian = db.get(Department, asset.current_custodian_id) if asset.current_custodian_id else None
+        
+        result.append({
+            "id": str(asset.id),
+            "nomenclature": asset.nomenclature,
+            "serial_number": asset.serial_number,
+            "part_number": asset.part_number,
+            "type_category": asset.asset_type.category,
+            "condition": asset.condition.value if hasattr(asset.condition, 'value') else asset.condition,
+            "status": asset.current_status.value if hasattr(asset.current_status, 'value') else asset.current_status,
+            "airworthiness_status": asset.airworthiness_status.value if hasattr(asset.airworthiness_status, 'value') else asset.airworthiness_status,
+            "location": asset.current_location or "N/A",
+            "owner": owner.name if owner else "N/A",
+            "custodian": custodian.name if custodian else "N/A"
+        })
+    return result

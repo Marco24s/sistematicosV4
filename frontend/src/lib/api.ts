@@ -37,6 +37,14 @@ export async function login(username: string, secret: string) {
   });
 }
 
+export async function getMe() {
+  return fetchAPI("/auth/me");
+}
+
+export async function getGlobalEngineAssets() {
+  return fetchAPI("/assets/global-engine/all");
+}
+
 export async function getFleetAvailability() {
   return fetchAPI("/reporting/fleet-availability");
 }

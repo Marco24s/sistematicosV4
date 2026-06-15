@@ -220,7 +220,7 @@ export default function SquadronMaintenanceConsole() {
               className="mil-input"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ej. inspector_calidad, jefe_taller"
+              placeholder="Ej. tech, jefe, inspector"
               required
               style={{ width: '100%', padding: '10px', background: '#07090b', border: '1px solid var(--border-color)', color: '#fff' }}
             />

@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Numeric, String, Text, UniqueConstraint, JSON
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -85,7 +85,7 @@ class AssetDocument(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         nullable=False,
     )
 
-    asset: Mapped[Asset] = relationship()
+    asset: Mapped[Asset] = relationship(back_populates="documents")
     document_type: Mapped[DocumentType] = relationship(back_populates="asset_documents")
     technical_history_entries: Mapped[list["TechnicalHistoryEntry"]] = relationship(back_populates="asset_document")
     package_links: Mapped[list["PackageDocumentLink"]] = relationship(back_populates="asset_document")
@@ -213,9 +213,9 @@ class DocumentComplianceCheck(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMix
     validated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     validated_by: Mapped[str] = mapped_column(String(180), nullable=False)
     compliant: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
-    asset: Mapped[Asset] = relationship()
+    asset: Mapped["Asset | None"] = relationship(foreign_keys=[asset_id])
 
 
 class PhysicalDocumentCustody(UUIDPrimaryKeyMixin, Base):

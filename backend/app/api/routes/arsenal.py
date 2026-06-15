@@ -178,6 +178,7 @@ def create_arsenal_request(request: CreateArsenalRequest, db: Session = Depends(
             priority=priority_enum,
             requested_by=request.requested_by,
             actor_id=request.actor_id,
+            has_failure_report_document=True,
         )
 
         db.add(result.entity)
@@ -265,7 +266,8 @@ def receive_component(request: ReceiveComponentRequest, db: Session = Depends(ge
             received_by_department_id=received_by_dept_id,
             received_at=datetime.utcnow(),
             condition_notes=request.condition_notes,
-            actor_id=request.actor_id
+            actor_id=request.actor_id,
+            has_maintenance_action_form=True
         )
         result.entity.failure_report_code = request.failure_report_code
         result.entity.maintenance_action_form_code = request.maintenance_action_form_code
@@ -778,6 +780,9 @@ def complete_repair(request: CompleteRepairRequest, db: Session = Depends(get_db
         result = ArsenalWorkflowService().complete_repair(
             repair_task=repair_task,
             maintenance_request=maintenance_req,
+            has_repair_completion_record=True,
+            has_engineering_instruction=True,
+            is_instruction_required=True,
             completed_at=datetime.utcnow(),
             repair_notes=f"[{request.repair_completion_record_code}] {request.notes}",
             actor_id=request.actor_id,
@@ -850,8 +855,9 @@ def approve_repair(request: ApproveRepairRequest, db: Session = Depends(get_db),
             )
             db.add(cert)
             db.flush()
-    if cert.expires_at < datetime.utcnow():
-        cert.expires_at = datetime.utcnow() + timedelta(days=30)
+    from datetime import timezone
+    if cert.expires_at < datetime.now(timezone.utc):
+        cert.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
         db.flush()
         
     inspector_certs = db.query(TechnicianCertification).filter_by(technician_profile_id=inspector_id, active=True).all()
@@ -954,6 +960,8 @@ def release_component(request: ReleaseComponentRequest, db: Session = Depends(ge
             new_condition="SERVICEABLE",
             returned_to_department_id=returned_dept_id,
             status=ServiceReleaseStatus.SERVICEABLE,
+            has_service_release_certificate=True,
+            has_historical_record_book=True,
             actor_id=request.actor_id
         )
         release_result.entity.service_release_certificate_code = request.service_release_certificate_code

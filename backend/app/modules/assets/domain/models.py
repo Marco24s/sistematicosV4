@@ -22,6 +22,11 @@ class AssetCondition(StrEnum):
 
 
 class AssetStatus(StrEnum):
+    PENDING_COMMISSIONING = "PENDING_COMMISSIONING"
+    UNDER_INSPECTION = "UNDER_INSPECTION"
+    ACTIVE_SERVICE = "ACTIVE_SERVICE"
+    QUARANTINED = "QUARANTINED"
+    STORAGE = "STORAGE"
     IN_STOCK = "IN_STOCK"
     INSTALLED = "INSTALLED"
     IN_TRANSFER = "IN_TRANSFER"
@@ -46,6 +51,13 @@ class AssetClassification(StrEnum):
     CALIBRATION_CONTROLLED = "CALIBRATION_CONTROLLED"
     LIFE_LIMITED = "LIFE_LIMITED"
     DISPOSABLE = "DISPOSABLE"
+
+class AirworthinessStatus(StrEnum):
+    AIRWORTHY = "AIRWORTHY"
+    NON_AIRWORTHY = "NON_AIRWORTHY"
+    RESTRICTED = "RESTRICTED"
+    AWAITING_CERTIFICATION = "AWAITING_CERTIFICATION"
+    UNKNOWN = "UNKNOWN"
 
 
 class AssetType(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -90,16 +102,39 @@ class Asset(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     batch_number: Mapped[str | None] = mapped_column(String(120), nullable=True)
     manufacturer_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
     compatible_platforms: Mapped[str | None] = mapped_column(Text, nullable=True)
+    
+    # New Global Engine Fields
+    organization_owner_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("organizations.id"),
+        nullable=True,
+        index=True,
+    )
+    current_location: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    airworthiness_status: Mapped[AirworthinessStatus] = mapped_column(
+        Enum(AirworthinessStatus, name="airworthiness_status"),
+        default=AirworthinessStatus.UNKNOWN,
+        nullable=False,
+    )
 
     asset_type: Mapped[AssetType] = relationship(back_populates="assets")
     current_custodian: Mapped[Department | None] = relationship(
         back_populates="custody_assets",
         foreign_keys=[current_custodian_id],
     )
+    organization_owner: Mapped["Organization | None"] = relationship(
+        "Organization",
+        foreign_keys=[organization_owner_id],
+    )
     technical_history: Mapped["TechnicalHistory | None"] = relationship(
         back_populates="asset",
         uselist=False,
         cascade="all, delete-orphan",
+    )
+    documents: Mapped[list["AssetDocument"]] = relationship(  # type: ignore[name-defined]
+        back_populates="asset",
+        cascade="all, delete-orphan",
+        foreign_keys="AssetDocument.asset_id"
     )
 
     transfers: Mapped[list["AssetTransfer"]] = relationship(
